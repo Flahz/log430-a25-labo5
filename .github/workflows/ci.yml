@@ -78,4 +78,6 @@ jobs:
           REDIS_PORT: "6379"
           REDIS_DB: "0"
           PYTHONPATH: src
+          PAYMENT_SERVICE_URL: mock
+          PAYMENT_PROCESS_URL_TEMPLATE: "http://mock/payments/{payment_id}"
         run: pytest

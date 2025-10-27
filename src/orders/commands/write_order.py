@@ -4,6 +4,8 @@ SPDX - License - Identifier: LGPL - 3.0 - or -later
 Auteurs : Gabriel C. Ullmann, Fabio Petrillo, 2025
 """
 import json
+import os
+import uuid
 from logger import Logger
 import requests
 from flask import request
@@ -112,7 +114,16 @@ def request_payment_link(order_id, total_amount, user_id):
         "total_amount": total_amount
     }
 
-    api_gateway_url = "http://api-gateway:8080/payments-api/payments"
+    api_gateway_url = os.getenv("PAYMENT_SERVICE_URL", "http://api-gateway:8080/payments-api/payments")
+    process_url_template = os.getenv(
+        "PAYMENT_PROCESS_URL_TEMPLATE",
+        "http://api-gateway:8080/payments-api/payments/process/{payment_id}"
+    )
+
+    if api_gateway_url.lower() == "mock":
+        payment_id = str(uuid.uuid4())
+        print(f"ID paiement (mock): {payment_id}")
+        return process_url_template.format(payment_id=payment_id)
 
     try:
         response_from_payment_service = requests.post(
@@ -138,7 +149,7 @@ def request_payment_link(order_id, total_amount, user_id):
 
     print(f"ID paiement: {payment_id}")
 
-    return f"http://api-gateway:8080/payments-api/payments/process/{payment_id}"
+    return process_url_template.format(payment_id=payment_id)
 
 def delete_order(order_id: int):
     """Delete order in MySQL, keep Redis in sync"""
