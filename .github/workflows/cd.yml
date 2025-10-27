@@ -1,0 +1,119 @@
+name: CD
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on:
+      - self-hosted
+      - Linux
+      - X64
+    environment:
+      name: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure SSH key
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          key_path="${HOME}/.ssh/store_manager_ci_key"
+          echo "${SSH_PRIVATE_KEY}" > "${key_path}"
+          chmod 600 "${key_path}"
+          {
+            echo "Host ${VM_HOST}"
+            echo "  HostName ${VM_HOST}"
+            echo "  User ${VM_USER}"
+            echo "  IdentityFile ${key_path}"
+            echo "  StrictHostKeyChecking no"
+            echo "  UserKnownHostsFile=/dev/null"
+          } >> ~/.ssh/config
+          echo "SSH_KEY_PATH=${key_path}" >> "${GITHUB_ENV}"
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.VM_SSH_PRIVATE_KEY }}
+          VM_HOST: ${{ vars.VM_HOST }}
+          VM_USER: ${{ vars.VM_USER }}
+
+      - name: Ensure target directory exists
+        run: |
+          set -euo pipefail
+          port="${VM_PORT:-22}"
+          ssh -i "${SSH_KEY_PATH}" -p "${port}" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${VM_USER}@${VM_HOST}" "mkdir -p '${VM_TARGET_DIR}'"
+        env:
+          VM_HOST: ${{ vars.VM_HOST }}
+          VM_USER: ${{ vars.VM_USER }}
+          VM_PORT: ${{ vars.VM_PORT }}
+          VM_TARGET_DIR: ${{ vars.VM_TARGET_DIR }}
+          SSH_KEY_PATH: ${{ env.SSH_KEY_PATH }}
+
+      - name: Sync repository to remote host
+        run: |
+          set -euo pipefail
+          port="${VM_PORT:-22}"
+          rsync -az --delete \
+            -e "ssh -i ${SSH_KEY_PATH} -p ${port} -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null" \
+            --exclude '.git/' \
+            --exclude '.github/workflows/' \
+            --exclude '__pycache__/' \
+            ./ "${VM_USER}@${VM_HOST}:${VM_TARGET_DIR}"
+        env:
+          VM_HOST: ${{ vars.VM_HOST }}
+          VM_USER: ${{ vars.VM_USER }}
+          VM_PORT: ${{ vars.VM_PORT }}
+          VM_TARGET_DIR: ${{ vars.VM_TARGET_DIR }}
+          SSH_KEY_PATH: ${{ env.SSH_KEY_PATH }}
+
+      - name: Restart Docker Compose stack
+        run: |
+          set -euo pipefail
+          port="${VM_PORT:-22}"
+          ssh -i "${SSH_KEY_PATH}" -p "${port}" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${VM_USER}@${VM_HOST}" "
+            set -euo pipefail
+            cd '${VM_TARGET_DIR}'
+            docker compose down --remove-orphans
+            docker compose up -d --build
+          "
+        env:
+          VM_HOST: ${{ vars.VM_HOST }}
+          VM_USER: ${{ vars.VM_USER }}
+          VM_PORT: ${{ vars.VM_PORT }}
+          VM_TARGET_DIR: ${{ vars.VM_TARGET_DIR }}
+          SSH_KEY_PATH: ${{ env.SSH_KEY_PATH }}
+
+      - name: Health checks
+        if: vars.VM_HEALTHCHECK_URL != '' || vars.VM_HEALTHCHECK_URLS != ''
+        run: |
+          set -euo pipefail
+          urls="${VM_HEALTHCHECK_URLS:-${VM_HEALTHCHECK_URL}}"
+          urls="$(echo "${urls}" | tr '\n' ' ' | tr ',' ' ' | tr ';' ' ')"
+          if [ -z "${urls// }" ]; then
+            echo "No health check URLs provided; skipping."
+            exit 0
+          fi
+          for endpoint in ${urls}; do
+            endpoint="$(echo "${endpoint}" | xargs)"
+            [ -z "${endpoint}" ] && continue
+            echo "Checking health at ${endpoint}"
+            success=false
+            for attempt in {1..12}; do
+              if curl -fsS "${endpoint}" > /dev/null; then
+                echo "  Healthy (${endpoint})"
+                success=true
+                break
+              fi
+              echo "  Waiting for ${endpoint}... (${attempt}/12)"
+              sleep 5
+            done
+            if [ "${success}" = false ]; then
+              echo "::error::Health check failed for ${endpoint}"
+              exit 1
+            fi
+          done
+        env:
+          VM_HEALTHCHECK_URL: ${{ vars.VM_HEALTHCHECK_URL }}
+          VM_HEALTHCHECK_URLS: ${{ vars.VM_HEALTHCHECK_URLS }}
