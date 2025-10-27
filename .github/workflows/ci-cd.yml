@@ -150,14 +150,14 @@ jobs:
         run: |
           set -euo pipefail
           port="${VM_PORT:-22}"
+          project_name="${COMPOSE_PROJECT_NAME:-log430-labo5}"
           ssh -i "${SSH_KEY_PATH}" -p "${port}" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${VM_USER}@${VM_HOST}" "
             set -euo pipefail
             cd '${VM_TARGET_DIR}'
             docker network inspect labo05-network >/dev/null 2>&1 || docker network create labo05-network
             docker compose down --remove-orphans || true
-            project_name="${COMPOSE_PROJECT_NAME:-log430-labo5}"
-            docker compose --project-name "${project_name}" down --remove-orphans || true
-            docker compose --project-name "${project_name}" up -d --build
+            docker compose --project-name '${project_name}' down --remove-orphans || true
+            docker compose --project-name '${project_name}' up -d --build
           "
         env:
           VM_HOST: ${{ vars.VM_HOST }}
