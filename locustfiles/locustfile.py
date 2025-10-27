@@ -17,5 +17,15 @@ class FlaskAPIUser(HttpUser):
     @task(1)
     def test_rate_limit(self):
         """Test pour vérifier le rate limiting"""
-        # TODO: écrivez le test
-        print("Test")
+        payload = {
+            "user_id": random.randint(1, 3),
+            "items": [{"product_id": random.randint(1, 4), "quantity": random.randint(1, 10)}]
+        }
+
+        response = self.client.post(
+            "/store-api/orders",
+            json=payload
+        )
+
+        if response.status_code == 503: # HTTP 503 Service Unavailable
+            print("Rate limit atteint!")

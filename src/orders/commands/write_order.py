@@ -112,14 +112,33 @@ def request_payment_link(order_id, total_amount, user_id):
         "total_amount": total_amount
     }
 
-    # TODO: Requête à POST /payments
-    print("")
-    response_from_payment_service = {}
+    api_gateway_url = "http://api-gateway:8080/payments-api/payments"
 
-    if True: # if response.ok
-        print(f"ID paiement: {payment_id}")
+    try:
+        response_from_payment_service = requests.post(
+            api_gateway_url,
+            json=payment_transaction,
+            headers={"Content-Type": "application/json"},
+            timeout=5,
+        )
+        response_from_payment_service.raise_for_status()
+    except requests.RequestException as exc:
+        logger.error(f"Erreur lors de la création du paiement pour la commande {order_id}: {exc}")
+        raise
 
-    return f"http://api-gateway:8080/payments-api/payments/process/{payment_id}" 
+    try:
+        payment_response = response_from_payment_service.json()
+    except ValueError as exc:
+        logger.error(f"Réponse JSON invalide du service de paiement pour la commande {order_id}")
+        raise ValueError("Réponse JSON invalide reçue du service de paiement.") from exc
+
+    payment_id = payment_response.get("payment_id") or payment_response.get("id")
+    if not payment_id:
+        raise ValueError("Le service de paiement n'a pas retourné de payment_id.")
+
+    print(f"ID paiement: {payment_id}")
+
+    return f"http://api-gateway:8080/payments-api/payments/process/{payment_id}"
 
 def delete_order(order_id: int):
     """Delete order in MySQL, keep Redis in sync"""

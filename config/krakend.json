@@ -27,6 +27,43 @@
           "timeout": "5s"
         }
       ]
+    },
+    {
+      "endpoint": "/store-api/orders",
+      "method": "POST",
+      "backend": [
+        {
+          "url_pattern": "/orders",
+          "host": ["http://store_manager:5000"]
+        }
+      ],
+      "extra_config": {
+        "qos/ratelimit/router": {
+          "max_rate": 10,
+          "every": "1m"
+        }
+      }
+    },
+    {
+      "endpoint": "/store-api/orders",
+      "method": "PUT",
+      "backend": [
+        {
+          "url_pattern": "/orders",
+          "host": ["http://store_manager:5000"]
+        }
+      ]
+    },
+    {
+      "endpoint": "/store-api/test/slow/{delay}",
+      "method": "GET",
+      "backend": [
+        {
+          "url_pattern": "/test/slow/{delay}",
+          "host": ["http://store_manager:5000"],
+          "timeout": "5s"
+        }
+      ]
     }
   ]
 }
