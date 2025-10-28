@@ -140,7 +140,7 @@ En plus de fonctionner en tant qu'une façade pour nos APIs, nous pouvons aussi 
 ```
 
 Changez la ligne ci-dessous dans `docker-compose.yml` :
-
+allo
 Avant:
 ```yml
 command: -f /mnt/locust/locustfile.py --host=http://store_manager:5000
