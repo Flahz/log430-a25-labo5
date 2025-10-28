@@ -84,10 +84,7 @@ jobs:
 
   deploy:
     needs: tests
-    runs-on:
-      - self-hosted
-      - Linux
-      - X64
+    runs-on: self-hosted
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     environment:
       name: production
@@ -150,7 +147,7 @@ jobs:
         run: |
           set -euo pipefail
           port="${VM_PORT:-22}"
-          project_name="${COMPOSE_PROJECT_NAME:-log430-labo5}"
+          project_name=${COMPOSE_PROJECT_NAME:-log430-labo5}
           ssh -i "${SSH_KEY_PATH}" -p "${port}" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${VM_USER}@${VM_HOST}" "
             set -euo pipefail
             cd '${VM_TARGET_DIR}'
