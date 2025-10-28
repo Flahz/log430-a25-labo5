@@ -143,9 +143,9 @@ jobs:
           SSH_KEY_PATH: ${{ env.SSH_KEY_PATH }}
 
       - name: Restart Docker Compose stack
-        shell: bash --noprofile --norc -e
+        shell: bash
         run: |
-          set -o pipefail
+          set -e
           port="${VM_PORT:-22}"
           project_name="log430-labo5"
           ssh -i "${SSH_KEY_PATH}" -p "${port}" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${VM_USER}@${VM_HOST}" "
