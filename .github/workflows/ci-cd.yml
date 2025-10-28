@@ -156,7 +156,11 @@ jobs:
             for cname in prometheus store_manager api-gateway log430-labo5-locust-1 log430-labo5-redis-1 log430-labo5-mysql-1; do
               docker ps -aq --filter "name=${cname}" | xargs -r docker rm -f >/dev/null 2>&1 || true
             done
+            for host_port in 5000 8080 8089 9090; do
+              docker ps -aq --filter "publish=${host_port}" | xargs -r docker rm -f >/dev/null 2>&1 || true
+            done
             docker compose --project-name '${project_name}' up -d --build
+            docker compose --project-name '${project_name}' ps
           "
         env:
           VM_HOST: ${{ vars.VM_HOST }}
