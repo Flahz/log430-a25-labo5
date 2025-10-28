@@ -143,15 +143,17 @@ jobs:
           SSH_KEY_PATH: ${{ env.SSH_KEY_PATH }}
 
       - name: Restart Docker Compose stack
+        shell: bash --noprofile --norc -e
         run: |
-          set -euo pipefail
+          set -o pipefail
           port="${VM_PORT:-22}"
           project_name="log430-labo5"
           ssh -i "${SSH_KEY_PATH}" -p "${port}" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${VM_USER}@${VM_HOST}" "
-            set -eo pipefail
+            set -e
             cd '${VM_TARGET_DIR}'
             docker network inspect labo05-network >/dev/null 2>&1 || docker network create labo05-network
             docker compose down --remove-orphans || true
+            name=""
             for name in store_manager api-gateway prometheus log430-labo5-locust-1 log430-labo5-redis-1 log430-labo5-mysql-1; do
               docker rm -f "${name}" >/dev/null 2>&1 || true
             done
