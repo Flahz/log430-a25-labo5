@@ -95,7 +95,7 @@ jobs:
 
       - name: Configure SSH key
         run: |
-          set -eo pipefail
+          set -e
           mkdir -p ~/.ssh
           key_path="${HOME}/.ssh/store_manager_ci_key"
           echo "${SSH_PRIVATE_KEY}" > "${key_path}"
