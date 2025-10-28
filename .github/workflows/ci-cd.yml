@@ -147,7 +147,7 @@ jobs:
         run: |
           set -euo pipefail
           port="${VM_PORT:-22}"
-          project_name=${COMPOSE_PROJECT_NAME:-log430-labo5}
+          project_name="log430-labo5"
           ssh -i "${SSH_KEY_PATH}" -p "${port}" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${VM_USER}@${VM_HOST}" "
             set -euo pipefail
             cd '${VM_TARGET_DIR}'
