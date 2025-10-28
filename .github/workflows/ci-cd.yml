@@ -148,7 +148,7 @@ jobs:
           port="${VM_PORT:-22}"
           project_name="log430-labo5"
           ssh -i "${SSH_KEY_PATH}" -p "${port}" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${VM_USER}@${VM_HOST}" "
-            set -euo pipefail
+            set -eo pipefail
             cd '${VM_TARGET_DIR}'
             docker network inspect labo05-network >/dev/null 2>&1 || docker network create labo05-network
             docker compose down --remove-orphans || true
