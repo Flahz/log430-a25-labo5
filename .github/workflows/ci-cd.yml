@@ -124,7 +124,6 @@ jobs:
           VM_USER: ${{ vars.VM_USER }}
           VM_PORT: ${{ vars.VM_PORT }}
           VM_TARGET_DIR: ${{ vars.VM_TARGET_DIR }}
-          SSH_KEY_PATH: ${{ env.SSH_KEY_PATH }}
 
       - name: Sync repository to remote host
         run: |
