@@ -157,10 +157,11 @@ jobs:
               docker ps -aq --filter "name=${cname}" | xargs -r docker rm -f >/dev/null 2>&1 || true
             done
             for host_port in 5000 8080 8089 9090; do
-              docker ps -aq --filter "publish=${host_port}" | xargs -r docker rm -f >/dev/null 2>&1 || true
+              fuser -k ${host_port}/tcp >/dev/null 2>&1 || true
             done
             docker compose --project-name '${project_name}' up -d --build
             docker compose --project-name '${project_name}' ps
+            lsof -i :5000 || true
           "
         env:
           VM_HOST: ${{ vars.VM_HOST }}
