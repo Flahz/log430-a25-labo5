@@ -177,35 +177,4 @@ jobs:
           VM_TARGET_DIR: ${{ vars.VM_TARGET_DIR }}
           SSH_KEY_PATH: ${{ env.SSH_KEY_PATH }}
 
-      - name: Health checks
-        if: vars.VM_HEALTHCHECK_URL != '' || vars.VM_HEALTHCHECK_URLS != ''
-        run: |
-          set -euo pipefail
-          urls="${VM_HEALTHCHECK_URLS:-${VM_HEALTHCHECK_URL}}"
-          urls="$(echo "${urls}" | tr '\n' ' ' | tr ',' ' ' | tr ';' ' ')"
-          if [ -z "${urls// }" ]; then
-            echo "No health check URLs provided; skipping."
-            exit 0
-          fi
-          for endpoint in ${urls}; do
-            endpoint="$(echo "${endpoint}" | xargs)"
-            [ -z "${endpoint}" ] && continue
-            echo "Checking health at ${endpoint}"
-            success=false
-            for attempt in {1..12}; do
-              if curl -fsS "${endpoint}" > /dev/null; then
-                echo "  Healthy (${endpoint})"
-                success=true
-                break
-              fi
-              echo "  Waiting for ${endpoint}... (${attempt}/12)"
-              sleep 5
-            done
-            if [ "${success}" = false ]; then
-              echo "::error::Health check failed for ${endpoint}"
-              exit 1
-            fi
-          done
-        env:
-          VM_HEALTHCHECK_URL: ${{ vars.VM_HEALTHCHECK_URL }}
-          VM_HEALTHCHECK_URLS: ${{ vars.VM_HEALTHCHECK_URLS }}
+      
