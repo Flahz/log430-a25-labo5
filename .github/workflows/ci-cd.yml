@@ -165,7 +165,6 @@ jobs:
           VM_PORT: ${{ vars.VM_PORT }}
           VM_TARGET_DIR: ${{ vars.VM_TARGET_DIR }}
           SSH_KEY_PATH: ${{ env.SSH_KEY_PATH }}
-          COMPOSE_PROJECT_NAME: ${{ vars.COMPOSE_PROJECT_NAME }}
 
       - name: Health checks
         if: vars.VM_HEALTHCHECK_URL != '' || vars.VM_HEALTHCHECK_URLS != ''
