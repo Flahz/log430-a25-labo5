@@ -151,18 +151,24 @@ jobs:
           ssh -i "${SSH_KEY_PATH}" -p "${port}" -o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null "${VM_USER}@${VM_HOST}" "
             set -e
             cd '${VM_TARGET_DIR}'
+            export STORE_MANAGER_PORT=15500
+            export API_GATEWAY_PORT=18080
+            export LOCUST_PORT=18089
+            export PROMETHEUS_PORT=19090
+            export MYSQL_PORT=13306
+            export REDIS_PORT=16379
             docker network inspect labo05-network >/dev/null 2>&1 || docker network create labo05-network
             docker compose --project-name '${project_name}' down --remove-orphans || true
             for cname in prometheus store_manager api-gateway log430-labo5-locust-1 log430-labo5-redis-1 log430-labo5-mysql-1; do
               docker ps -aq --filter "name=${cname}" | xargs -r docker rm -f >/dev/null 2>&1 || true
             done
-            for host_port in 5000 8080 8089 9090; do
+            for host_port in $STORE_MANAGER_PORT $API_GATEWAY_PORT $LOCUST_PORT $PROMETHEUS_PORT $MYSQL_PORT $REDIS_PORT; do
               fuser -k ${host_port}/tcp >/dev/null 2>&1 || true
             done
             docker compose --project-name '${project_name}' up -d --build
             sleep 5
             docker compose --project-name '${project_name}' ps
-            lsof -i :5000 || true
+            lsof -i :${STORE_MANAGER_PORT} || true
           "
         env:
           VM_HOST: ${{ vars.VM_HOST }}
